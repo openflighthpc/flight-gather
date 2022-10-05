@@ -12,12 +12,14 @@ def between(string, s1, s2) # Returns the contents of string between the last in
 end
 
 # Set command line options
-options = {}
+options = { name: "data",
+            dir: "./"}
 OptionParser.new do |opts|
   opts.banner = "A tool to gather system information for a node.\nUsage: gather.rb [options]"
   opts.on("-p", "--primary PRIMARYGROUPS", "Primary group for the node") { |o| options[:pri] = o }
-  opts.on("-g", "--groups GROUP1,GROUP2,GROUP3", Array, "Comma-separated list of secondary groups for the node") { |o| options[:sec] = o }
-  opts.on("-n", "--name FILENAME", "Name of exported YAML file") { |o| options[:name] = o }
+  opts.on("-g", "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node") { |o| options[:sec] = o }
+  opts.on("-n", "--name ", "Name of exported YAML file, defaults to ") { |o| options[:name] = o }
+  opts.on("-d", "--directory DIRECTORY", "Directory to save output to, defaults to current directory") { |o| options[:dir] = o }
 end.parse!
 
 data = { system: { model: "NULL",
@@ -84,7 +86,7 @@ elsif sysInfo.include? "amazon"
 elsif sysInfo.include? "azure"
   data[:system][:cloud] = "Azure"
 else
-  data[:system][:cloud] = "Unrecognised cloud platform"
+  data[:system][:cloud] = "Not on a cloud platform"
 end
 
-File.open("./#{options[:name]}.yml", "w") { |file| file.write(data.to_yaml) }
+File.open(options[:dir]+options[:name]+".yml", "w") { |file| file.write(data.to_yaml) }

@@ -13,12 +13,11 @@
       :name: TigerLake-LP GT2 [Iris Xe Graphics]
       :slot: PCI:0000:00:02.0
   :ram: '16081780'
-  :cloud: Unrecognised cloud platform
+  :cloud: Not on a cloud platform
   :primaryGroup: Example primary group
   :secondaryGroups:
   - eg1
   - eg2
-  - eg3
 :network:
   lo:
     :ip: 127.0.0.1
