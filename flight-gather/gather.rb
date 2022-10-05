@@ -5,8 +5,11 @@ require "optparse"
 require "socket"
 require "active_support"
 require "active_support/core_ext/hash"
-require "json"
-require "pp"
+require "pp" # just for debugging
+
+def between(string, s1, s2) # Returns the contents of string between the last instance of s1 and the next subsequent instance of s2
+  string.split(s1).last.split(s2).first
+end
 
 # Set command line options
 options = {}
@@ -39,18 +42,12 @@ data[:system][:serial] = `dmidecode -s system-serial-number`.delete("\n")
 data[:system][:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.delete("\n") # RAM measured in kB
 
 # Get processor info
-procIds = `dmidecode -q -t processor | grep "ID:"`.delete("\t").split("\n").map{ |x| x[4..] } # collect CPU IDs into array
-procInfo = JSON.parse(`lscpu -J`)["lscpu"]
-procIds.each do |id|
-  data[:system][:cpus][id] = {}
-  procInfo.each do |setting|
-    if setting["field"] == "Model name:"
-      data[:system][:cpus][id][:model] = setting["data"]
-    elsif setting["field"] == "Core(s) per socket:"
-      data[:system][:cpus][id][:cores] = setting["data"].to_i
-    end
-    data[:system][:cpus][id][:slot] = `dmidecode -q -t processor | grep "Socket Designation:"`[21..-2]
-  end
+procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..]
+procInfo.each do |proc|
+  data[:system][:cpus][between(proc, "Socket Designation: ", "\n")] = { id: between(proc, "ID: ", "\n",),
+                                                                      model: between(proc, "Version: ", "\n",),
+                                                                      cores: [between(proc, "Core Count: ", "\n").to_i, 1].max
+                                                                    }
 end
 
 # Get interface info
