@@ -53,15 +53,6 @@ procIds.each do |id|
   end
 end
 
-#procInfo = `dmidecode -q -t processor`.split("\n")
-#for procIndex in 0..(procInfo.grep(/ID:/).length-1)
-#  id = procInfo.grep(/ID:/)[procIndex][5..]
-#  data[:system][:cpus][id] = { model: procInfo.grep(/Version:/)[procIndex][10..],
-#                               slot: procInfo.grep(/Socket Designation:/)[procIndex][21..],
-#                               cores: procInfo.grep(/Core Count:/)[procIndex][13..].to_i
-#                             }
-#end
-
 # Get interface info
 ifs = Socket.getifaddrs.select { |x| x.addr.ipv4?}
 ifs.each do |interface|
@@ -70,19 +61,6 @@ ifs.each do |interface|
                                      speed: `ethtool #{interface.name} | grep Speed | awk '{print $2}'`.delete("\n")
                                    }
 end
-
-#ifs = XmlHasher.parse(`lshw -C network -xml`)[:list][:node]
-#ifs = [ifs].flatten(1) # convert to singleton array if not an array already
-#ifs.each do |interface|
-#  data[:network][interface[:logicalname]] = { #mac: interface[:serial],
-#                                              speed: interface[:size]
-#                                            }
-#  interface[:configuration][:setting].each do |setting|
-#    if setting[:id] == "ip"
-#      data[:network][interface[:logicalname]][:ip] = setting[:value]
-#    end
-#  end
-#end
 
 # Get disk size
 diskText = `lsblk -d`.split("\n").drop(1)
@@ -105,7 +83,7 @@ sysInfo = `dmidecode -t system`.downcase
 if sysInfo.include? "openstack"
   data[:system][:cloud] = "OpenStack"
 elsif sysInfo.include? "amazon"
-  data[:system][:cloud] = "Amazon"
+  data[:system][:cloud] = "AWS"
 elsif sysInfo.include? "azure"
   data[:system][:cloud] = "Azure"
 else
