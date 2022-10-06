@@ -50,7 +50,8 @@ procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..]
 procInfo.each do |proc|
   data[:cpus][between(proc, "Socket Designation: ", "\n")] = { id: between(proc, "ID: ", "\n",),
                                                                model: between(proc, "Version: ", "\n",),
-                                                               cores: [between(proc, "Core Count: ", "\n").to_i, 1].max
+                                                               cores: [between(proc, "Thread Count: ", "\n").to_i, 1].max,
+                                                               hyperthreading: `cat /sys/devices/system/cpu/smt/active`=="1\n"
                                                              }
   
 end
