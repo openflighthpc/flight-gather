@@ -35,7 +35,7 @@ data = { model: "NULL",
          disks: {},
          bmcip: "Not found",
          bmcmac: "Not found",
-         sysuid: "NULL",
+         sysuuid: "NULL",
          bootif: "NULL"
         }
 
