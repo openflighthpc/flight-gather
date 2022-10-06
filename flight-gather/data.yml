@@ -23,11 +23,20 @@
     :mac: 00:00:00:00:00:00
     :speed: ''
   wlp0s20f3:
-    :ip: 10.150.0.55
+    :ip: 192.168.7.242
     :mac: AC:74:B1:84:79:61
     :speed: ''
+  tun0:
+    :ip: 10.78.1.34
+    :mac: "\n"
+    :speed: 10Mb/s
 :disks:
   zram0:
     :size: 8G
   nvme0n1:
     :size: 476.9G
+:bmcip: Not founds
+:bmcmac: Not found
+:sysuid: 'NULL'
+:bootif:
+:sysuuid:

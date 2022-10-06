@@ -32,7 +32,11 @@ data = { model: "NULL",
          primaryGroup: options[:pri],
          secondaryGroups: options[:sec],
          network: {},
-         disks: {}
+         disks: {},
+         bmcip: "Not found",
+         bmcmac: "Not found",
+         sysuid: "NULL",
+         bootif: "NULL"
         }
 
 # Get system info
@@ -45,19 +49,31 @@ data[:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.delete("\n") # RAM
 procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..]
 procInfo.each do |proc|
   data[:cpus][between(proc, "Socket Designation: ", "\n")] = { id: between(proc, "ID: ", "\n",),
-                                                                      model: between(proc, "Version: ", "\n",),
-                                                                      cores: [between(proc, "Core Count: ", "\n").to_i, 1].max
-                                                                    }
+                                                               model: between(proc, "Version: ", "\n",),
+                                                               cores: [between(proc, "Core Count: ", "\n").to_i, 1].max
+                                                             }
+  
 end
 
 # Get interface info
-ifs = Socket.getifaddrs.select { |x| x.addr.ipv4?}
+ifs = Socket.getifaddrs.select { |x| x.addr and x.addr.ipv4?}
 ifs.each do |interface|
   data[:network][interface.name] = { ip: interface.addr.ip_address,
                                      mac: `nmcli -t device show #{interface.name} | grep HWADDR`[15..31],
                                      speed: `ethtool #{interface.name} | grep Speed | awk '{print $2}'`.delete("\n")
                                    }
 end
+
+# Get BMC info
+addr=`ipmitool lan print 1 | grep -e "IP Address" | grep -vi "Source"| awk '{ print $4 }'`.chomp rescue nil
+data[:bmcip]= addr unless addr.to_s.empty? 
+mac=`ipmitool lan print 1 | grep 'MAC Address' | awk '{ print $4 }'`.chomp rescue nil
+data[:bmcmac] = mac unless mac.to_s.empty?
+
+# Get info from cmdline
+cmdline = ::File::read('/proc/cmdline').split.map { |a| h=a.split('='); [h.first,h.last] if h.size == 2}.compact.to_h
+data[:sysuuid] = cmdline['SYSUUID']
+data[:bootif] = cmdline['BOOTIF']
 
 # Get disk size
 diskText = `lsblk -d`.split("\n").drop(1)
@@ -71,8 +87,8 @@ gpus = Hash.from_xml(`lshw -C display -xml`)["list"]["node"]
 gpus = [gpus].flatten(1) # convert to singleton array if not an array already
 gpus.each_with_index do |gpu, index|
   data[:gpus]["GPU #{index}"] = { name: gpu["product"],
-                                           slot: gpu["handle"]
-                                         }
+                                  slot: gpu["handle"]
+                                }
 end
 
 # Get cloud platform info
