@@ -2,13 +2,15 @@
 
 require "yaml"
 require "optparse"
-require "socket"
 require "active_support"
 require "active_support/core_ext/hash"
 require "pp" # just for debugging
 
 def between(string, s1, s2) # Returns the contents of string between the last instance of s1 and the next subsequent instance of s2
-  string.split(s1).last.split(s2).first
+  if string.include? s1 and string.split(s1).last.include? s2
+    string.split(s1).last.split(s2).first
+  else ""
+  end
 end
 
 # Set command line options
@@ -23,9 +25,9 @@ OptionParser.new do |opts|
   opts.on("-n", "--name FILENAME", "Name of exported YAML file, defaults to data.yml") { |o| if o[-4..] == ".yml" then options[:name] = o else options[:name] = o + ".yml" end }
   opts.on("-d", "--directory DIRECTORY", "Directory to save output to, defaults to current directory") { |o| options[:dir] = o }
   opts.on("-t", "--types x,y,z", Array, "Type of check to run (physical or logical), if not provided then both types are collected") { |o| 
-                                                                                                                                      options[:physical] = o.include? "physical"
-                                                                                                                                      options[:logical] = o.include? "logical"
-                                                                                                                                    }
+                                                                                                                                       options[:physical] = o.include? "physical"
+                                                                                                                                       options[:logical] = o.include? "logical"
+                                                                                                                                     }
 end.parse!
 
 data = { primaryGroup: options[:pri],
@@ -34,10 +36,10 @@ data = { primaryGroup: options[:pri],
 
 # Get system info
 if options[:physical]
-  data[:model] = `dmidecode -s system-product-name`.delete("\n")
-  data[:bios] = `dmidecode -s bios-version`.delete("\n")
-  data[:serial] = `dmidecode -s system-serial-number`.delete("\n")
-  data[:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.delete("\n") # RAM measured in kB
+  data[:model] = `dmidecode -s system-product-name`.chomp
+  data[:bios] = `dmidecode -s bios-version`.chomp
+  data[:serial] = `dmidecode -s system-serial-number`.chomp
+  data[:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.chomp # RAM measured in kB
 end
 
 # Get processor info
@@ -56,13 +58,11 @@ end
 
 # Get interface info
 data[:network] = {}
-ifs = Socket.getifaddrs.select { |x| x.addr and x.addr.ipv4?}
-ifs.each do |interface|
-
-  data[:network][interface.name] = {}
-  data[:network][interface.name][:ip] = interface.addr.ip_address unless !options[:logical]
-  data[:network][interface.name][:mac] = `nmcli -t device show #{interface.name} | grep HWADDR`[15..31] unless !options[:physical]
-  data[:network][interface.name][:speed] = `ethtool #{interface.name} | grep Speed | awk '{print $2}'`.delete("\n") unless !options[:physical]
+::Dir::entries('/sys/class/net').reject! {|x| x =~ /\.|\.\.|lo/i }.sort.each do |interface|
+  data[:network][interface] = {}
+  data[:network][interface][:ip] = between(`nmcli -t device show #{interface}`, "IP4.ADDRESS[1]:", "\n") unless !options[:logical]
+  data[:network][interface][:mac] = `nmcli -t device show #{interface} | grep HWADDR`[15..31] unless !options[:physical]
+  data[:network][interface][:speed] = `ethtool #{interface} | grep Speed | awk '{print $2}'`.chomp unless !options[:physical]
 end
 
 # Get BMC info

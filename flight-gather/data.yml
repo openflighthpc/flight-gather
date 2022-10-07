@@ -14,10 +14,12 @@
     :cores: 8
     :hyperthreading: true
 :network:
-  lo:
-    :mac: 00:00:00:00:00:00
-    :speed: ''
+  enp0s13f0u1u4:
+    :ip: ''
+    :mac: 00:E0:4C:68:00:A9
+    :speed: 10Mb/s
   wlp0s20f3:
+    :ip: 10.150.0.55/16
     :mac: AC:74:B1:84:79:61
     :speed: ''
 :sysuuid:
