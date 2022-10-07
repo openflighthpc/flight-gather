@@ -3,38 +3,32 @@
 :secondaryGroups:
 - eg1
 - eg2
-:physical:
-  :model: XPS 13 9310
-  :bios: 3.9.0
-  :serial: GNXBGK3
-  :cpus:
-    CPU 1:
-      :id: C2 06 08 00 FF FB EB BF
-      :model: 11th Gen Intel(R) Core(TM) i7-1195G7 @ 2.90GHz
-      :cores: 8
-      :hyperthreading: true
-  :gpus:
-    GPU 0:
-      :name: TigerLake-LP GT2 [Iris Xe Graphics]
-      :slot: PCI:0000:00:02.0
-  :ram: '16081780'
-  :disks:
-    zram0:
-      :size: 8G
-    nvme0n1:
-      :size: 476.9G
-  :sysuuid:
-  :bootif:
-:logical:
-  :cloud: Not on a cloud platform
-  :network:
-    lo:
-      :ip: 127.0.0.1
-      :mac: 00:00:00:00:00:00
-      :speed: ''
-    wlp0s20f3:
-      :ip: 10.150.0.55
-      :mac: AC:74:B1:84:79:61
-      :speed: ''
-  :bmcip: Not found
-  :bmcmac: Not found
+:model: XPS 13 9310
+:bios: 3.9.0
+:serial: GNXBGK3
+:ram: '16081780'
+:cpus:
+  CPU 1:
+    :id: C2 06 08 00 FF FB EB BF
+    :model: 11th Gen Intel(R) Core(TM) i7-1195G7 @ 2.90GHz
+    :cores: 8
+    :hyperthreading: true
+:network:
+  lo:
+    :mac: 00:00:00:00:00:00
+    :speed: ''
+  wlp0s20f3:
+    :mac: AC:74:B1:84:79:61
+    :speed: ''
+:sysuuid:
+:bootif:
+:disks:
+  zram0:
+    :size: 8G
+  nvme0n1:
+    :size: 476.9G
+:gpus:
+  GPU 0:
+    :name: TigerLake-LP GT2 [Iris Xe Graphics]
+    :slot: PCI:0000:00:02.0
+:cloud: Not on a cloud platform

@@ -12,100 +12,106 @@ def between(string, s1, s2) # Returns the contents of string between the last in
 end
 
 # Set command line options
-options = { name: "data",
-            dir: "./"}
+options = { name: "data.yml",
+            dir: "./",
+            physical: true,
+            logical: true}
 OptionParser.new do |opts|
   opts.banner = "A tool to gather system information for a node.\nUsage: gather.rb [options]"
   opts.on("-p", "--primary PRIMARYGROUPS", "Primary group for the node") { |o| options[:pri] = o }
   opts.on("-g", "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node") { |o| options[:sec] = o }
-  opts.on("-n", "--name ", "Name of exported YAML file, defaults to data.yml") { |o| if o[-4..] == ".yml" then options[:name] = o else options[:name] = o + ".yml" end }
+  opts.on("-n", "--name FILENAME", "Name of exported YAML file, defaults to data.yml") { |o| if o[-4..] == ".yml" then options[:name] = o else options[:name] = o + ".yml" end }
   opts.on("-d", "--directory DIRECTORY", "Directory to save output to, defaults to current directory") { |o| options[:dir] = o }
+  opts.on("-t", "--types x,y,z", Array, "Type of check to run (physical or logical), if not provided then both types are collected") { |o| 
+                                                                                                                                      options[:physical] = o.include? "physical"
+                                                                                                                                      options[:logical] = o.include? "logical"
+                                                                                                                                    }
 end.parse!
 
 data = { primaryGroup: options[:pri],
-         secondaryGroups: options[:sec],
-         physical: { model: "NULL",
-                     bios: "NULL",
-                     serial: "NULL",
-                     cpus: {},
-                     gpus: {},
-                     ram: "NULL",
-                     disks: {},
-                     sysuuid: "NULL",
-                     bootif: "NULL"
-                   },
-         logical: { cloud: "NULL",
-                    network: {},
-                    bmcip: "Not found",
-                    bmcmac: "Not found"
-                  }
-        }
+         secondaryGroups: options[:sec]
+       }
 
 # Get system info
-data[:physical][:model] = `dmidecode -s system-product-name`.delete("\n")
-data[:physical][:bios] = `dmidecode -s bios-version`.delete("\n")
-data[:physical][:serial] = `dmidecode -s system-serial-number`.delete("\n")
-data[:physical][:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.delete("\n") # RAM measured in kB
+if options[:physical]
+  data[:model] = `dmidecode -s system-product-name`.delete("\n")
+  data[:bios] = `dmidecode -s bios-version`.delete("\n")
+  data[:serial] = `dmidecode -s system-serial-number`.delete("\n")
+  data[:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.delete("\n") # RAM measured in kB
+end
 
 # Get processor info
-procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..]
-procInfo.each do |proc|
-  data[:physical][:cpus][between(proc, "Socket Designation: ", "\n")] = { id: between(proc, "ID: ", "\n",),
-                                                                          model: between(proc, "Version: ", "\n",),
-                                                                          cores: [between(proc, "Thread Count: ", "\n").to_i, 1].max,
-                                                                          hyperthreading: `cat /sys/devices/system/cpu/smt/active`=="1\n"
-                                                                        }
-  
+if options[:physical]
+  data[:cpus] = {}
+  procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..]
+  procInfo.each do |proc|
+    data[:cpus][between(proc, "Socket Designation: ", "\n")] = { id: between(proc, "ID: ", "\n",),
+                                                                 model: between(proc, "Version: ", "\n",),
+                                                                 cores: [between(proc, "Thread Count: ", "\n").to_i, 1].max,
+                                                                 hyperthreading: `cat /sys/devices/system/cpu/smt/active`=="1\n"
+                                                               }
+    
+  end
 end
 
 # Get interface info
+data[:network] = {}
 ifs = Socket.getifaddrs.select { |x| x.addr and x.addr.ipv4?}
 ifs.each do |interface|
-  data[:logical][:network][interface.name] = { ip: interface.addr.ip_address,
-                                               mac: `nmcli -t device show #{interface.name} | grep HWADDR`[15..31],
-                                               speed: `ethtool #{interface.name} | grep Speed | awk '{print $2}'`.delete("\n")
-                                             }
+
+  data[:network][interface.name] = {}
+  data[:network][interface.name][:ip] = interface.addr.ip_address unless !options[:logical]
+  data[:network][interface.name][:mac] = `nmcli -t device show #{interface.name} | grep HWADDR`[15..31] unless !options[:physical]
+  data[:network][interface.name][:speed] = `ethtool #{interface.name} | grep Speed | awk '{print $2}'`.delete("\n") unless !options[:physical]
 end
 
 # Get BMC info
-if !`command -v ipmitool`.empty?
+if !`command -v ipmitool`.empty? and options[:logical]
   addr=`ipmitool lan print 1 | grep -e "IP Address" | grep -vi "Source"| awk '{ print $4 }'`.chomp rescue nil
-  data[:logical][:bmcip]= addr unless addr.to_s.empty? 
+  data[:bmcip]= addr unless addr.to_s.empty? 
   mac=`ipmitool lan print 1 | grep 'MAC Address' | awk '{ print $4 }'`.chomp rescue nil
-  data[:logical][:bmcmac] = mac unless mac.to_s.empty?
+  data[:bmcmac] = mac unless mac.to_s.empty?
 end
 
 # Get info from cmdline
-cmdline = ::File::read('/proc/cmdline').split.map { |a| h=a.split('='); [h.first,h.last] if h.size == 2}.compact.to_h
-data[:physical][:sysuuid] = cmdline['SYSUUID']
-data[:physical][:bootif] = cmdline['BOOTIF']
+if options[:physical]
+  cmdline = ::File::read('/proc/cmdline').split.map { |a| h=a.split('='); [h.first,h.last] if h.size == 2}.compact.to_h
+  data[:sysuuid] = cmdline['SYSUUID']
+  data[:bootif] = cmdline['BOOTIF']
+end
 
 # Get disk size
-diskText = `lsblk -d`.split("\n").drop(1)
-diskText.each do |disk|
-  diskData = disk.split
-  data[:physical][:disks][diskData[0]] = {size: diskData[3]}
+if options[:physical]
+  data[:disks] = {}
+  diskText = `lsblk -d`.split("\n").drop(1)
+  diskText.each do |disk|
+    diskData = disk.split
+    data[:disks][diskData[0]] = {size: diskData[3]}
+  end
 end
 
 # Get GPU info
-gpus = Hash.from_xml(`lshw -C display -xml`)["list"]["node"]
-gpus = [gpus].flatten(1) # convert to singleton array if not an array already
-gpus.each_with_index do |gpu, index|
-  data[:physical][:gpus]["GPU #{index}"] = { name: gpu["product"],
-                                             slot: gpu["handle"]
-                                           }
+if options[:physical]
+  data[:gpus] = {}
+  gpus = Hash.from_xml(`lshw -C display -xml`)["list"]["node"]
+  gpus = [gpus].flatten(1) # convert to singleton array if not an array already
+  gpus.each_with_index do |gpu, index|
+    data[:gpus]["GPU #{index}"] = { name: gpu["product"],
+                                    slot: gpu["handle"]
+                                  }
+  end
 end
 
 # Get cloud platform info
 sysInfo = `dmidecode -t system`.downcase
 if sysInfo.include? "openstack"
-  data[:logical][:cloud] = "OpenStack"
+  data[:cloud] = "OpenStack"
 elsif sysInfo.include? "amazon"
-  data[:logical][:cloud] = "AWS"
+  data[:cloud] = "AWS"
 elsif sysInfo.include? "azure"
-  data[:logical][:cloud] = "Azure"
+  data[:cloud] = "Azure"
 else
-  data[:logical][:cloud] = "Not on a cloud platform"
+  data[:cloud] = "Not on a cloud platform"
 end
 
-File.open(options[:dir]+options[:name]+".yml", "w") { |file| file.write(data.to_yaml) }
+File.open(options[:dir]+options[:name], "w") { |file| file.write(data.to_yaml) }
