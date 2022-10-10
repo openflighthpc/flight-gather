@@ -30,6 +30,9 @@ OptionParser.new do |opts|
                                                                                                                                      }
 end.parse!
 
+puts "Gathering physical data..." unless !options[:physical]
+puts "Gathering logical data..." unless !options[:logical]
+
 data = { primaryGroup: options[:pri],
          secondaryGroups: options[:sec]
        }
@@ -47,7 +50,7 @@ if options[:physical]
   data[:cpus] = {}
   procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..-1]
   procInfo.each do |proc|
-    data[:cpus][between(proc, "Socket Designation: ", "\n")] = { id: between(proc, "ID: ", "\n",),
+    data[:cpus][between(proc, "Socket Designation: ", "\n").delete(" ")] = { id: between(proc, "ID: ", "\n",),
                                                                  model: between(proc, "Version: ", "\n",),
                                                                  cores: [between(proc, "Thread Count: ", "\n").to_i, 1].max,
                                                                  hyperthreading: `cat /sys/devices/system/cpu/smt/active`=="1\n"
@@ -102,16 +105,16 @@ if options[:physical]
   end
 end
 
-# Get cloud platform info
+# Get platform info
 sysInfo = `dmidecode -t system`.downcase
 if sysInfo.include? "openstack"
-  data[:cloud] = "OpenStack"
+  data[:platform] = "OpenStack"
 elsif sysInfo.include? "amazon"
-  data[:cloud] = "AWS"
+  data[:platform] = "AWS"
 elsif sysInfo.include? "azure"
-  data[:cloud] = "Azure"
+  data[:platform] = "Azure"
 else
-  data[:cloud] = "Not on a cloud platform"
+  data[:platform] = "Metal"
 end
 
 begin
@@ -120,3 +123,5 @@ rescue Errno::ENOENT
   puts "Invalid directory, defaulting to this directory"
   File.open("./data.yml", "w") { |file| file.write(data.to_yaml) }
 end
+
+puts "Done!"
