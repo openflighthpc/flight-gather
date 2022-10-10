@@ -114,4 +114,9 @@ else
   data[:cloud] = "Not on a cloud platform"
 end
 
-File.open(options[:dir]+options[:name], "w") { |file| file.write(data.to_yaml) }
+begin
+  File.open(options[:dir]+options[:name], "w") { |file| file.write(data.to_yaml) }
+rescue Errno::ENOENT
+  puts "Invalid directory, defaulting to this directory"
+  File.open("./data.yml", "w") { |file| file.write(data.to_yaml) }
+end
