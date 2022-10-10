@@ -120,8 +120,8 @@ end
 begin
   File.open(options[:dir]+options[:name], "w") { |file| file.write(data.to_yaml) }
 rescue Errno::ENOENT
-  puts "Invalid directory, defaulting to this directory"
-  File.open("./data.yml", "w") { |file| file.write(data.to_yaml) }
+  puts "Invalid directory, defaulting to current directory"
+  File.open("./" + options[:name], "w") { |file| file.write(data.to_yaml) }
 end
 
 puts "Done!"
