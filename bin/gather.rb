@@ -70,6 +70,24 @@ module FlightGather
   end
   
   command "modify" do |c|
+    c.syntax = "modify [options]"
+    c.option "--primary PRIMARYGROUPS", String, "Primary group for the node"
+    c.option "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node"
+    
+    c.action do |args, options|
+      begin
+        File.open(File.join(root, "lib/buffer.yml")) { |bufferFile|
+          data = YAML.load_file(bufferFile)
+          data[:primaryGroup] = options.primary
+          data[:secondaryGroups] = options.secondary
+          File.open(File.join(root, "lib/buffer.yml"), "w") { |file| file.write(data.to_yaml) }
+          puts "Field(s) modified"
+        }
+      rescue Errno::ENOENT
+        puts "System info not yet gathered, try running 'gather' first"
+      end
+    end
+  end
 
   command "save" do |c|
     c.syntax = "save [options]"
