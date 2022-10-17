@@ -34,12 +34,12 @@ module FlightGather
     c.description = "Gathers physical and/or logical system information"
     c.option "--primary PRIMARYGROUPS", String, "Primary group for the node"
     c.option "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node"
-    c.option "--types x,y,z", Array, "Type of check to run (physical or logical), if not provided then both types are collected"
+    c.option "--type x,y,z", Array, "Type of check to run (physical or logical), if not provided then both types are collected"
     
     c.action do |args, options|
-      options.default types: ["physical","logical"]
-      options.physical = options.types.include? "physical"
-      options.logical = options.types.include? "logical"
+      options.default type: ["physical","logical"]
+      options.physical = options.type.include? "physical"
+      options.logical = options.type.include? "logical"
       
       puts "Beginning data gather..."
 
@@ -47,12 +47,12 @@ module FlightGather
                secondaryGroups: options.secondary
              }
 
-      if options.types.include? "physical"
+      if options.type.include? "physical"
         puts "Gathering physical data..."
         data = data.deep_merge(physical_data)
       end
 
-      if options.types.include? "logical"
+      if options.type.include? "logical"
         puts "Gathering logical data..."
         data = data.deep_merge(logical_data)
       end
@@ -63,6 +63,8 @@ module FlightGather
   
   command "show" do |c|
     c.syntax = "show"
+    c.description = "Displays collected system information"
+    
     c.action do |args, options|
       begin
         File.open(self.filePath) { |file| puts file.read }
@@ -74,6 +76,7 @@ module FlightGather
   
   command "modify" do |c|
     c.syntax = "modify [options]"
+    c.description = "Reset primary and/or secondary group for the node"
     c.option "--primary PRIMARYGROUPS", String, "Primary group for the node"
     c.option "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node"
     
