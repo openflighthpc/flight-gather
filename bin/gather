@@ -2,6 +2,10 @@ module FlightGather
   def self.root
     File.expand_path('..', __dir__)
   end
+  
+  def self.filePath
+    File.open(File.join(root, "etc/config.yaml")) { |config| YAML.load_file(config)["output"] }
+  end
 end
 
 $LOAD_PATH.unshift(File.join(FlightGather.root, "lib"), File.join(FlightGather.root, "helpers"))
@@ -9,7 +13,6 @@ $LOAD_PATH.unshift(File.join(FlightGather.root, "lib"), File.join(FlightGather.r
 require "physical"
 require "logical"
 require "between"
-require "options"
 
 require "yaml"
 require "active_support"
@@ -26,8 +29,8 @@ module FlightGather
   program :description, "Tool for gathering system information"
   default_command :help
 
-  command "gather" do |c|
-    c.syntax = "gather [options]"
+  command "collect" do |c|
+    c.syntax = "collect [options]"
     c.description = "Gathers physical and/or logical system information"
     c.option "--primary PRIMARYGROUPS", String, "Primary group for the node"
     c.option "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node"
@@ -53,8 +56,8 @@ module FlightGather
         puts "Gathering logical data..."
         data = data.deep_merge(logical_data)
       end
-      File.open(File.join(root, "lib/buffer.yml"), "w") { |file| file.write(data.to_yaml) }
-      puts "Data gathered. Use 'show' to review data, or 'save' to save to chosen directory"
+      File.open(self.filePath, "w") { |file| file.write(data.to_yaml) }
+      puts "Data gathered and written to " + self.filePath
     end
   end
   
@@ -62,9 +65,9 @@ module FlightGather
     c.syntax = "show"
     c.action do |args, options|
       begin
-        File.open(File.join(root, "lib/buffer.yml")) { |file| puts file.read }
+        File.open(self.filePath) { |file| puts file.read }
       rescue Errno::ENOENT
-        puts "System info not yet gathered, try running 'gather' first"
+        puts "System info not yet gathered, try running 'collect' first"
       end
     end
   end
@@ -84,33 +87,7 @@ module FlightGather
           puts "Field(s) modified"
         }
       rescue Errno::ENOENT
-        puts "System info not yet gathered, try running 'gather' first"
-      end
-    end
-  end
-
-  command "save" do |c|
-    c.syntax = "save [options]"
-    c.option "--name FILENAME", String, "Name of exported YAML file, defaults to data.yml"
-    c.option "--directory DIRECTORY", String, "Directory to save output to, defaults to current directory"
-    
-    c.action do |args, options|
-      options.default name: "data.yml",
-                      directory: self.root
-      begin
-        File.open(File.join(root, "lib/buffer.yml")) { |bufferFile|
-          begin
-            File.open(File.join(options.directory, options.name), "w") { |file| file.write(bufferFile.read) }
-            puts "Written to " + File.join(options.directory, options.name)
-          rescue Errno::ENOENT
-            puts File.join(options.directory, options.name)
-            puts "Invalid directory, defaulting to current directory"
-            File.open("./" + options.name, "w") { |file| file.write(bufferFile.to_yaml) }
-            puts "Saved to " + File.join(root, options[:name])
-          end
-        }
-      rescue Errno::ENOENT
-        puts "System info not yet gathered, try running 'gather' first"
+        puts "System info not yet gathered, try running 'collect' first"
       end
     end
   end
