@@ -39,7 +39,7 @@ def physical_data
   
   data[:cpus] = {}
   procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..-1]
-  procInfo.each do |proc|
+  procInfo&.each do |proc|
     data[:cpus][between(proc, "Socket Designation: ", "\n").delete(" ")] = { id: between(proc, "ID: ", "\n",),
                                                                              model: between(proc, "Version: ", "\n",),
                                                                              cores: [between(proc, "Thread Count: ", "\n").to_i, 1].max,
@@ -51,7 +51,7 @@ def physical_data
   # Get interface info
   
   data[:network] = {}
-  ::Dir::entries('/sys/class/net').reject! {|x| x =~ /\.|\.\.|lo/i }.sort.each do |interface|
+  ::Dir::entries('/sys/class/net').reject! {|x| x =~ /\.|\.\.|lo/i }.sort&.each do |interface|
     data[:network][interface] = {} unless data[:network].key?(interface)
     data[:network][interface][:mac] = `nmcli -t device show #{interface} | grep HWADDR`[15..31]
     data[:network][interface][:speed] = `ethtool #{interface} | grep Speed | awk '{print $2}'`.chomp
@@ -67,7 +67,7 @@ def physical_data
   
   data[:disks] = {}
   diskText = `lsblk -d`.split("\n").drop(1)
-  diskText.each do |disk|
+  diskText&.each do |disk|
     diskData = disk.split
     data[:disks][diskData[0]] = {size: diskData[3]}
   end
@@ -77,7 +77,7 @@ def physical_data
   data[:gpus] = {}
   gpus = Hash.from_xml(`lshw -C display -xml`)["list"]["node"]
   gpus = [gpus].flatten(1) # convert to singleton array if not an array already
-  gpus.each_with_index do |gpu, index|
+  gpus&.each_with_index do |gpu, index|
     data[:gpus]["GPU #{index}"] = { name: gpu["product"],
                                     slot: gpu["handle"]
                                   }

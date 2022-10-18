@@ -30,7 +30,7 @@ def logical_data
   
   # Get interface info
   data[:network] = {}
-  ::Dir::entries('/sys/class/net').reject! {|x| x =~ /\.|\.\.|lo/i }.sort.each do |interface|
+  ::Dir::entries('/sys/class/net').reject! {|x| x =~ /\.|\.\.|lo/i }.sort&.each do |interface|
     data[:network][interface] = {} unless data[:network].key?(interface)
     data[:network][interface][:ip] = between(`nmcli -t device show #{interface}`, "IP4.ADDRESS[1]:", "\n")
   end
