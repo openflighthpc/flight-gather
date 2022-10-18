@@ -65,12 +65,21 @@ module FlightGather
     c.description = "Gathers physical and/or logical system information"
     c.option "--primary PRIMARYGROUPS", String, "Primary group for the node"
     c.option "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node"
-    c.option "--type x,y,z", Array, "Type of check to run (physical or logical), if not provided then both types are collected"
+    c.option "--type TYPE", String, "Type of check to run (physical or logical), if not provided then both types are collected"
     
     c.action do |args, options|
-      options.default type: ["physical","logical"]
-      options.physical = options.type.include? "physical"
-      options.logical = options.type.include? "logical"
+      if options.type == nil
+        options.physical = true
+        options.logical = true
+      else
+        options.physical = options.type.downcase == "physical"
+        options.logical = options.type.downcase == "logical"
+      end
+      
+      if !(options.physical || options.logical) then 
+        puts "Invalid data type, must be 'physical' or 'logical'"
+        next
+      end
       
       puts "Beginning data gather..."
 
@@ -78,12 +87,12 @@ module FlightGather
                secondaryGroups: options.secondary
              }
 
-      if options.type.include? "physical"
+      if options.physical
         puts "Gathering physical data..."
         data = data.deep_merge(physical_data)
       end
 
-      if options.type.include? "logical"
+      if options.logical
         puts "Gathering logical data..."
         data = data.deep_merge(logical_data)
       end
