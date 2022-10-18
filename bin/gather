@@ -33,7 +33,7 @@ module FlightGather
   end
   
   def self.filePath
-    File.open(File.join(root, "etc/config.yaml")) { |config| YAML.load_file(config)["output"] }
+    File.open(File.join(root, "etc/config.yaml")) { |config| File.expand_path(YAML.load_file(config)["output"]) }
   end
 end
 
