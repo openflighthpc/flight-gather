@@ -37,7 +37,9 @@ module FlightGather
   end
 end
 
-$LOAD_PATH.unshift(File.join(FlightGather.root, "lib"), File.join(FlightGather.root, "helpers"))
+lib_dir = File.expand_path(File.join(__FILE__, '../../lib'))
+helpers_dir = File.expand_path(File.join(__FILE__, '../../helpers'))
+$LOAD_PATH.unshift(lib_dir, helpers_dir)
 
 require "physical"
 require "logical"
