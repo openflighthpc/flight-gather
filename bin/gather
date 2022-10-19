@@ -84,7 +84,7 @@ module FlightGather
       puts "Beginning data gather..."
 
       data = { primaryGroup: options.primary,
-               secondaryGroups: options.secondary
+               secondaryGroups: options.groups
              }
 
       if options.physical
@@ -125,7 +125,7 @@ module FlightGather
         File.open(self.filePath) { |file|
           data = YAML.load_file(file)
           data[:primaryGroup] = options.primary
-          data[:secondaryGroups] = options.secondary
+          data[:secondaryGroups] = options.groups
           File.open(self.filePath, "w") { |fileNew| fileNew.write(data.to_yaml) }
           puts "Field(s) modified"
         }

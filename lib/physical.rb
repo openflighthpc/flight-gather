@@ -39,12 +39,13 @@ def physical_data
   
   data[:cpus] = {}
   procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..-1]
-  procInfo&.each do |proc|
-    data[:cpus][between(proc, "Socket Designation: ", "\n").delete(" ")] = { id: between(proc, "ID: ", "\n",),
-                                                                             model: between(proc, "Version: ", "\n",),
-                                                                             cores: [between(proc, "Thread Count: ", "\n").to_i, 1].max,
-                                                                             hyperthreading: `cat /sys/devices/system/cpu/smt/active`=="1\n"
-                                                                           }
+  procInfo&.each.with_index() do |proc, index|
+    data[:cpus]["CPU"+index.to_s] = { socket: between(proc, "Socket Designation: ", "\n"),
+                                      id: between(proc, "ID: ", "\n",),
+                                      model: between(proc, "Version: ", "\n",),
+                                      cores: [between(proc, "Thread Count: ", "\n").to_i, 1].max,
+                                      hyperthreading: `cat /sys/devices/system/cpu/smt/active`=="1\n"
+                                    }
     
   end
   
