@@ -79,7 +79,7 @@ def physical_data
   gpus = Hash.from_xml(`lshw -C display -xml`)["list"]["node"]
   gpus = [gpus].flatten(1) # convert to singleton array if not an array already
   gpus&.each_with_index do |gpu, index|
-    data[:gpus]["GPU #{index}"] = { name: gpu["product"],
+    data[:gpus]["GPU"+index.to_s] = { name: gpu["product"],
                                     slot: gpu["handle"]
                                   }
   end
