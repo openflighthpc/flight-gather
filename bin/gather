@@ -56,7 +56,7 @@ module FlightGather
   extend Commander::Delegates
   
   program :name, "gather"
-  program :version, "1.0.0"
+  program :version, "0.0.5"
   program :description, "Tool for gathering system information"
   default_command :help
 
