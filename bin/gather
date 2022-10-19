@@ -122,11 +122,11 @@ module FlightGather
     
     c.action do |args, options|
       begin
-        File.open(File.join(root, "lib/buffer.yml")) { |bufferFile|
-          data = YAML.load_file(bufferFile)
+        File.open(self.filePath) { |file|
+          data = YAML.load_file(file)
           data[:primaryGroup] = options.primary
           data[:secondaryGroups] = options.secondary
-          File.open(File.join(root, "lib/buffer.yml"), "w") { |file| file.write(data.to_yaml) }
+          File.open(self.filePath, "w") { |fileNew| fileNew.write(data.to_yaml) }
           puts "Field(s) modified"
         }
       rescue Errno::ENOENT
