@@ -39,7 +39,7 @@ def physical_data
   
   data[:cpus] = {}
   procInfo = `dmidecode -q -t processor`.split("Processor Information")[1..-1]
-  procInfo&.each.with_index() do |proc, index|
+  procInfo&.each&.with_index() do |proc, index|
     data[:cpus]["CPU"+index.to_s] = { socket: between(proc, "Socket Designation: ", "\n"),
                                       id: between(proc, "ID: ", "\n",),
                                       model: between(proc, "Version: ", "\n",),

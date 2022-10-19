@@ -48,7 +48,7 @@ def logical_data
     data[:platform] = "OpenStack"
   elsif sysInfo.include? "amazon"
     data[:platform] = "AWS"
-  elsif sysInfo.include? "azure"
+  elsif sysInfo.include? "microsoft"
     data[:platform] = "Azure"
   else
     data[:platform] = "Metal"
