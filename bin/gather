@@ -33,7 +33,16 @@ module FlightGather
   end
   
   def self.filePath
-    File.open(File.join(root, "etc/config.yaml")) { |config| File.expand_path(YAML.load_file(config)["output"]) }
+    File.open(File.join(root, "etc/config.yaml")) { |config|
+      path = (YAML.load_file(config)["output"])
+      if path==""
+        path = "/opt/flight/opt/gather/var/data.yml"
+      else
+        File.expand_path(path)
+      end
+      FileUtils.mkdir_p(File.dirname(path))
+      path
+    }
   end
 end
 
