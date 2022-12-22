@@ -76,9 +76,8 @@ def physical_data
   # Get GPU info
   
   data[:gpus] = {}
-  puts Hash.from_xml(`lshw -C display -xml`).inspect
   gpus = Hash.from_xml(`lshw -C display -xml`)["list"]
-  if !gpus.nil?
+  if gpus != "\n"
     gpus = gpus["node"]
     gpus = [gpus].flatten(1) # convert to singleton array if not an array already
     gpus&.each_with_index do |gpu, index|
