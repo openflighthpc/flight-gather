@@ -76,6 +76,7 @@ def physical_data
   # Get GPU info
   
   data[:gpus] = {}
+  puts Hash.from_xml(`lshw -C display -xml`).inspect
   gpus = Hash.from_xml(`lshw -C display -xml`)["list"]
   if !gpus.nil?
     gpus = gpus["node"]
