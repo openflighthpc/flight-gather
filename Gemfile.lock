@@ -18,11 +18,13 @@ GEM
       concurrent-ruby (~> 1.0)
 
 PLATFORMS
+  ruby
   x86_64-linux
 
 DEPENDENCIES
   activesupport
   commander
+  i18n
   rexml (~> 3.2, >= 3.2.5)
 
 BUNDLED WITH

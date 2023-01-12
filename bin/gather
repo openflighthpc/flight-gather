@@ -113,12 +113,23 @@ module FlightGather
   command "show" do |c|
     c.syntax = "show"
     c.description = "Displays collected system information"
+    c.option "-f", "--force", "Gathers all information if not already gathered."
     
     c.action do |args, options|
       begin
         File.open(self.filePath) { |file| puts file.read }
       rescue Errno::ENOENT
-        puts "System info not yet gathered, try running 'collect' first"
+        if options.force
+          data = { primaryGroup: options.primary,
+                   secondaryGroups: options.groups
+                 }
+          data = data.deep_merge(physical_data)
+          data = data.deep_merge(logical_data)
+          File.open(self.filePath, "w") { |file| file.write(data.to_yaml) }
+          File.open(self.filePath) { |file| puts file.read }
+        else
+          puts "System info not yet gathered, try running 'collect' first"
+        end
       end
     end
   end
