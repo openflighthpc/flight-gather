@@ -25,5 +25,5 @@
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
 module Gather
-  VERSION = '0.1.0'
+  VERSION = '0.0.8'
 end
