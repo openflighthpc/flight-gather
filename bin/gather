@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby
-
 #==============================================================================
-# Copyright (C) 2020-present Alces Flight Ltd.
+# Copyright (C) 2023-present Alces Flight Ltd.
 #
-# This file is part of flight-gather.
+# This file is part of Flight Gather.
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which is available at
@@ -11,7 +10,7 @@
 # terms made available by Alces Flight Ltd - please direct inquiries
 # about licensing to licensing@alces-flight.com.
 #
-# flight-gather is distributed in the hope that it will be useful, but
+# Flight Gather is distributed in the hope that it will be useful, but
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
 # IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS
 # OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
@@ -19,141 +18,32 @@
 # details.
 #
 # You should have received a copy of the Eclipse Public License 2.0
-# along with flight-gather. If not, see:
+# along with Flight Gather. If not, see:
 #
 #  https://opensource.org/licenses/EPL-2.0
 #
-# For more information on flight-gather, please visit:
+# For more information on Flight Gather, please visit:
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
+begin
+  lib_dir = File.expand_path(File.join(__FILE__, '../../lib'))
+  $LOAD_PATH.unshift(lib_dir)
+  ENV['BUNDLE_GEMFILE'] ||= File.join(__FILE__, '../../Gemfile')
 
-module FlightGather
-  def self.root
-    File.expand_path('..', __dir__)
+  require 'rubygems'
+  require 'bundler'
+
+  Bundler.setup(:default)
+
+  require 'gather/cli'
+  Dir.chdir(ENV.fetch('FLIGHT_CWD','.'))
+  OpenFlight.set_standard_env rescue nil
+  Gather::CLI.run!
+rescue Interrupt
+  if Kernel.const_defined?(:Paint)
+    $stderr.puts "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
+  else
+    $stderr.puts "\nWARNING: Cancelled by user"
   end
-  
-  def self.filePath
-    File.open(File.join(root, "etc/config.yaml")) { |config|
-      path = (YAML.load_file(config)["output"])
-      if path==""
-        path = "/opt/flight/opt/gather/var/data.yml"
-      else
-        File.expand_path(path)
-      end
-      FileUtils.mkdir_p(File.dirname(path))
-      path
-    }
-  end
+  exit(130)
 end
-
-lib_dir = File.expand_path(File.join(__FILE__, '../../lib'))
-helpers_dir = File.expand_path(File.join(__FILE__, '../../helpers'))
-$LOAD_PATH.unshift(lib_dir, helpers_dir)
-
-require "physical"
-require "logical"
-require "between"
-
-require "yaml"
-require "active_support"
-require "active_support/core_ext/hash"
-require "pp"
-require "rubygems"
-require "commander"
-
-module FlightGather
-  extend Commander::Delegates
-  
-  program :name, "gather"
-  program :version, "0.0.8"
-  program :description, "Tool for gathering system information"
-  default_command :help
-
-  command "collect" do |c|
-    c.syntax = "collect [options]"
-    c.description = "Gathers physical and/or logical system information"
-    c.option "--primary PRIMARYGROUPS", String, "Primary group for the node"
-    c.option "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node"
-    c.option "--type TYPE", String, "Type of check to run (physical or logical), if not provided then both types are collected"
-    
-    c.action do |args, options|
-      if options.type == nil
-        options.physical = true
-        options.logical = true
-      else
-        options.physical = options.type.downcase == "physical"
-        options.logical = options.type.downcase == "logical"
-      end
-      
-      if !(options.physical || options.logical) then 
-        puts "Invalid data type, must be 'physical' or 'logical'"
-        next
-      end
-      
-      puts "Beginning data gather..."
-
-      data = { primaryGroup: options.primary,
-               secondaryGroups: options.groups
-             }
-
-      if options.physical
-        puts "Gathering physical data..."
-        data = data.deep_merge(physical_data)
-      end
-
-      if options.logical
-        puts "Gathering logical data..."
-        data = data.deep_merge(logical_data)
-      end
-      File.open(self.filePath, "w") { |file| file.write(data.to_yaml) }
-      puts "Data gathered and written to " + self.filePath
-    end
-  end
-  
-  command "show" do |c|
-    c.syntax = "show"
-    c.description = "Displays collected system information"
-    c.option "-f", "--force", "Gathers all information if not already gathered."
-    
-    c.action do |args, options|
-      begin
-        File.open(self.filePath) { |file| puts file.read }
-      rescue Errno::ENOENT
-        if options.force
-          data = { primaryGroup: options.primary,
-                   secondaryGroups: options.groups
-                 }
-          data = data.deep_merge(physical_data)
-          data = data.deep_merge(logical_data)
-          File.open(self.filePath, "w") { |file| file.write(data.to_yaml) }
-          File.open(self.filePath) { |file| puts file.read }
-        else
-          puts "System info not yet gathered, try running 'collect' first"
-        end
-      end
-    end
-  end
-  
-  command "modify" do |c|
-    c.syntax = "modify [options]"
-    c.description = "Reset primary and/or secondary group for the node"
-    c.option "--primary PRIMARYGROUPS", String, "Primary group for the node"
-    c.option "--groups x,y,z", Array, "Comma-separated list of secondary groups for the node"
-    
-    c.action do |args, options|
-      begin
-        File.open(self.filePath) { |file|
-          data = YAML.load_file(file)
-          data[:primaryGroup] = options.primary
-          data[:secondaryGroups] = options.groups
-          File.open(self.filePath, "w") { |fileNew| fileNew.write(data.to_yaml) }
-          puts "Field(s) modified"
-        }
-      rescue Errno::ENOENT
-        puts "System info not yet gathered, try running 'collect' first"
-      end
-    end
-  end
-end
-
-FlightGather.run!
