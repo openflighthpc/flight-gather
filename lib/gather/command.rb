@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -25,9 +24,24 @@
 # For more information on Flight Gather, please visit:
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
-source 'https://rubygems.org'
+require 'ostruct'
 
-gem 'commander-openflighthpc', '~> 2.2.0'
-gem 'tty-prompt'
-gem 'tty-config'
-gem 'xdg', git: 'https://github.com/bkuhlmann/xdg'
+module Gather
+  class Command
+    attr_accessor :args, :options
+
+    def initialize(args, options, command_name = nil)
+      @args = args.freeze
+      @options = OpenStruct.new(options.__hash__)
+    end
+
+    # this wrapper is here to later enable error handling &/ logging
+    def run!
+      run
+    end
+
+    def run
+      raise NotImplementedError
+    end
+  end
+end

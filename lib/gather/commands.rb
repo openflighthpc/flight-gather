@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -25,9 +24,32 @@
 # For more information on Flight Gather, please visit:
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
-source 'https://rubygems.org'
+require_relative 'commands/hello'
 
-gem 'commander-openflighthpc', '~> 2.2.0'
-gem 'tty-prompt'
-gem 'tty-config'
-gem 'xdg', git: 'https://github.com/bkuhlmann/xdg'
+module Gather
+  module Commands
+    class << self
+      def method_missing(s, *a, &b)
+        if clazz = to_class(s)
+          clazz.new(*a).run!
+        else
+          raise 'command not defined'
+        end
+      end
+
+      def respond_to_missing?(s)
+        !!to_class(s)
+      end
+
+      private
+      def to_class(s)
+        s.to_s.split('-').reduce(self) do |clazz, p|
+          p.gsub!(/_(.)/) {|a| a[1].upcase}
+          clazz.const_get(p[0].upcase + p[1..-1])
+        end
+      rescue NameError
+        nil
+      end
+    end
+  end
+end
