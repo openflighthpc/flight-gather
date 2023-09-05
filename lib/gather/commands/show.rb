@@ -38,10 +38,10 @@ module Gather
                  }
           data = data.deep_merge(physical_data)
           data = data.deep_merge(logical_data)
-          File.open(self.data_path, "w") { |file| file.write(data.to_yaml) }
-          File.open(self.data_path) { |file| puts file.read }
+          File.open(Config.data_path, "w") { |file| file.write(data.to_yaml) }
+          File.open(Config.data_path) { |file| puts file.read }
         else
-          File.open(self.data_path) { |file| puts file.read }
+          File.open(Config.data_path) { |file| puts file.read }
         end
       end
     end

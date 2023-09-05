@@ -56,7 +56,7 @@ module Gather
           puts "Gathering logical data..."
           data = data.deep_merge(Collector.logical_data)
         end
-        File.open(File.join(Config.data_path, "data.yaml"), "w") { |file| file.write(data.to_yaml) }
+        File.open(Config.data_path, "w") { |file| file.write(data.to_yaml) }
         puts "Data gathered and written to " + Config.data_path
       end
     end
