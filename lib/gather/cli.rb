@@ -34,26 +34,15 @@ module Gather
   module CLI
     PROGRAM_NAME = ENV.fetch('FLIGHT_PROGRAM_NAME','gather')
 
-    extend Commander::Delegates
+    extend Commander::CLI
     program :application, "Flight Gather"
     program :name, PROGRAM_NAME
     program :version, "v#{Gather::VERSION}"
-    program :description, '%DESCRIPTION%'
+    program :description, 'A tool to obtain relevant information about a node'
     program :help_paging, false
     default_command :help
-    silent_trace!
 
-    error_handler do |runner, e|
-      case e
-      when TTY::Reader::InputInterrupt
-        $stderr.puts "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
-        exit(130)
-      else
-        Commander::Runner::DEFAULT_ERROR_HANDLER.call(runner, e)
-      end
-    end
-
-    if ENV['TERM'] !~ /^xterm/ && ENV['TERM'] !~ /rxvt/
+    if [/^xterm/, /rxvt/, /256color/].all? { |regex| ENV['TERM'] !~ regex }
       Paint.mode = 0
     end
 
@@ -67,14 +56,31 @@ module Gather
       end
     end
 
-    command :hello do |c|
+    command :collect do |c|
       cli_syntax(c)
-      c.summary = 'Say hello'
-      c.action Commands, :hello
-      c.description = <<EOF
-Say hello.
-EOF
+      c.summary = "Gathers physical and/or logical system information"
+      c.description = "Gathers physical and/or logical system information"
+      c.slop.string "--primary", "Primary group for the node"
+      c.slop.array "--groups", "Comma-separated list of secondary groups for the node"
+      c.slop.string "--type", "Type of check to run (physical or logical), if not provided then both types are collected"
+      c.action Commands, :collect
     end
-    alias_command :h, :hello
+
+    command :show do |c|
+      cli_syntax(c)
+      c.summary = "Displays collected system information"
+      c.description = "Displays collected system information"
+      c.slop.bool "--force", "Gathers all information if not already gathered."
+      c.action Commands, :show
+    end
+
+    command :modify do |c|
+      cli_syntax(c)
+      c.summary = "Reset primary and/or secondary group for the node"
+      c.description = "Reset primary and/or secondary group for the node"
+      c.slop.string "--primary", "Primary group for the node"
+      c.slop.array "--groups", "Comma-separated list of secondary groups for the node"
+      c.action Commands, :modify
+    end
   end
 end

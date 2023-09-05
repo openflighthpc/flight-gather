@@ -38,7 +38,7 @@ begin
   require 'gather/cli'
   Dir.chdir(ENV.fetch('FLIGHT_CWD','.'))
   OpenFlight.set_standard_env rescue nil
-  Gather::CLI.run!
+  Gather::CLI.run!(*ARGV)
 rescue Interrupt
   if Kernel.const_defined?(:Paint)
     $stderr.puts "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
