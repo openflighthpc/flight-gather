@@ -36,7 +36,6 @@ module Gather
     class Collect < Command
       def run
 
-        puts @options.type.inspect
         if @options.type && (!["physical", "logical"].include? @options.type.downcase) then
           raise "Invalid data type, must be 'physical' or 'logical'"
         end
