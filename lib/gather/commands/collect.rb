@@ -24,33 +24,40 @@
 # For more information on Flight Gather, please visit:
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
-require_relative 'commands/collect'
-require_relative 'commands/modify'
-require_relative 'commands/show'
+require 'active_support'
+require 'active_support/core_ext/hash'
+
+require_relative '../command'
+require_relative '../collector'
+require_relative '../config'
 
 module Gather
   module Commands
-    class << self
-      def method_missing(s, *a, &b)
-        if clazz = to_class(s)
-          clazz.new(*a).run!
-        else
-          raise 'command not defined'
-        end
-      end
+    class Collect < Command
+      def run
 
-      def respond_to_missing?(s)
-        !!to_class(s)
-      end
-
-      private
-      def to_class(s)
-        s.to_s.split('-').reduce(self) do |clazz, p|
-          p.gsub!(/_(.)/) {|a| a[1].upcase}
-          clazz.const_get(p[0].upcase + p[1..-1])
+        puts @options.type.inspect
+        if @options.type && (!["physical", "logical"].include? @options.type.downcase) then
+          raise "Invalid data type, must be 'physical' or 'logical'"
         end
-      rescue NameError
-        nil
+
+        puts "Beginning data gather..."
+
+        data = { primaryGroup: @options.primary,
+                 secondaryGroups: @options.groups
+               }
+
+        if @options.type.nil? || @options.type.downcase == "physical"
+          puts "Gathering physical data..."
+          data = data.deep_merge(Collector.physical_data)
+        end
+
+        if @options.type.nil? || @options.type.downcase == "logical"
+          puts "Gathering logical data..."
+          data = data.deep_merge(Collector.logical_data)
+        end
+        File.open(File.join(Config.data_path, "data.yaml"), "w") { |file| file.write(data.to_yaml) }
+        puts "Data gathered and written to " + Config.data_path
       end
     end
   end

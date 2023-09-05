@@ -24,33 +24,21 @@
 # For more information on Flight Gather, please visit:
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
-require_relative 'commands/collect'
-require_relative 'commands/modify'
-require_relative 'commands/show'
+require_relative '../command'
+require_relative '../config'
 
 module Gather
   module Commands
-    class << self
-      def method_missing(s, *a, &b)
-        if clazz = to_class(s)
-          clazz.new(*a).run!
-        else
-          raise 'command not defined'
-        end
-      end
-
-      def respond_to_missing?(s)
-        !!to_class(s)
-      end
-
-      private
-      def to_class(s)
-        s.to_s.split('-').reduce(self) do |clazz, p|
-          p.gsub!(/_(.)/) {|a| a[1].upcase}
-          clazz.const_get(p[0].upcase + p[1..-1])
-        end
-      rescue NameError
-        nil
+    class Modify < Command
+      def run
+        raise "System info not yet gathered, try running 'collect' first" unless File.exists?(Config.data_path)
+        File.open(Config.data_path) { |file|
+          data = YAML.load_file(file)
+          data[:primaryGroup] = @options.primary
+          data[:secondaryGroups] = @options.groups
+          File.open(Config.data_path, "w") { |new| new.write(data.to_yaml) }
+          puts "Field(s) modified"
+        }
       end
     end
   end

@@ -25,12 +25,24 @@
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
 require_relative '../command'
+require_relative '../config'
 
 module Gather
   module Commands
-    class Hello < Command
+    class Show < Command
       def run
-        puts "Hello, gather"
+        if !File.exists?(Config.data_path)
+          raise "System info not yet gathered, try running 'collect' first" unless @options.force
+          data = { primaryGroup: @options.primary,
+                   secondaryGroups: @options.groups
+                 }
+          data = data.deep_merge(physical_data)
+          data = data.deep_merge(logical_data)
+          File.open(self.data_path, "w") { |file| file.write(data.to_yaml) }
+          File.open(self.data_path) { |file| puts file.read }
+        else
+          File.open(self.data_path) { |file| puts file.read }
+        end
       end
     end
   end
