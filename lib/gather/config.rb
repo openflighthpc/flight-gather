@@ -69,7 +69,7 @@ module Gather
       end
 
       def data_path
-        ENV['flight_GATHER_output'] || data.fetch(:output) || '/opt/flight/opt/gather/var/data.yml'
+        ENV['flight_GATHER_output'] || data.fetch(:output) || 'var/data.yml'
       end
 
       def save_user_data
