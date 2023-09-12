@@ -55,6 +55,8 @@ module Gather
           puts 'Gathering logical data...'
           data = data.deep_merge(Collector.logical_data)
         end
+
+        FileUtils.mkdir_p(File.dirname(Config.data_path))
         File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
         puts "Data gathered and written to #{Config.data_path}"
       end
