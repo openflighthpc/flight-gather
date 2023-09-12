@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -27,9 +28,9 @@
 #==============================================================================
 source 'https://rubygems.org'
 
-gem 'commander-openflighthpc', '~> 2.2.0'
-gem 'tty-prompt'
-gem 'tty-config'
-gem 'xdg', git: 'https://github.com/bkuhlmann/xdg', tag: '3.0.2'
 gem 'activesupport'
+gem 'commander-openflighthpc', '~> 2.2.0'
 gem 'i18n'
+gem 'tty-config'
+gem 'tty-prompt'
+gem 'xdg', git: 'https://github.com/bkuhlmann/xdg', tag: '3.0.2'

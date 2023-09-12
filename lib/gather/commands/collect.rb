@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -35,28 +37,26 @@ module Gather
   module Commands
     class Collect < Command
       def run
-
-        if @options.type && (!["physical", "logical"].include? @options.type.downcase) then
+        if @options.type && (!%w[physical logical].include? @options.type.downcase)
           raise "Invalid data type, must be 'physical' or 'logical'"
         end
 
-        puts "Beginning data gather..."
+        puts 'Beginning data gather...'
 
         data = { primaryGroup: @options.primary,
-                 secondaryGroups: @options.groups
-               }
+                 secondaryGroups: @options.groups }
 
-        if @options.type.nil? || @options.type.downcase == "physical"
-          puts "Gathering physical data..."
+        if @options.type.nil? || @options.type.downcase == 'physical'
+          puts 'Gathering physical data...'
           data = data.deep_merge(Collector.physical_data)
         end
 
-        if @options.type.nil? || @options.type.downcase == "logical"
-          puts "Gathering logical data..."
+        if @options.type.nil? || @options.type.downcase == 'logical'
+          puts 'Gathering logical data...'
           data = data.deep_merge(Collector.logical_data)
         end
-        File.open(Config.data_path, "w") { |file| file.write(data.to_yaml) }
-        puts "Data gathered and written to " + Config.data_path
+        File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
+        puts "Data gathered and written to #{Config.data_path}"
       end
     end
   end

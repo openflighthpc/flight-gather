@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -36,14 +38,18 @@ begin
   Bundler.setup(:default)
 
   require 'gather/cli'
-  Dir.chdir(ENV.fetch('FLIGHT_CWD','.'))
-  OpenFlight.set_standard_env rescue nil
+  Dir.chdir(ENV.fetch('FLIGHT_CWD', '.'))
+  begin
+    OpenFlight.set_standard_env
+  rescue StandardError
+    nil
+  end
   Gather::CLI.run!(*ARGV)
 rescue Interrupt
   if Kernel.const_defined?(:Paint)
-    $stderr.puts "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
+    warn "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
   else
-    $stderr.puts "\nWARNING: Cancelled by user"
+    warn "\nWARNING: Cancelled by user"
   end
   exit(130)
 end

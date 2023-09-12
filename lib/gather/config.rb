@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -31,7 +33,7 @@ require 'fileutils'
 module Gather
   module Config
     class << self
-      GATHER_DIR_SUFFIX = File.join('flight','gather')
+      GATHER_DIR_SUFFIX = File.join('flight', 'gather')
 
       def data
         @data ||= TTY::Config.new.tap do |cfg|
@@ -67,7 +69,7 @@ module Gather
       end
 
       def data_path
-        ENV['flight_GATHER_output'] || data.fetch(:output) || "/opt/flight/opt/gather/var/data.yml"
+        ENV['flight_GATHER_output'] || data.fetch(:output) || '/opt/flight/opt/gather/var/data.yml'
       end
 
       def save_user_data
@@ -90,6 +92,7 @@ module Gather
       end
 
       private
+
       def xdg_config
         @xdg_config ||= XDG::Config.new
       end
