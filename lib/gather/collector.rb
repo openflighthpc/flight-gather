@@ -107,7 +107,7 @@ module Gather
         data[:network][interface][:ip] = between(`nmcli -t device show #{interface}`, 'IP4.ADDRESS[1]:', "\n")
       end
 
-      unless `command -v ipmitool`.empty?
+      unless system("command -v ipmitool").nil?
         addr = begin
           `ipmitool lan print 1 | grep -e "IP Address" | grep -vi "Source"| awk '{ print $4 }'`.chomp
         rescue StandardError
