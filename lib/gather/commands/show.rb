@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -31,18 +33,16 @@ module Gather
   module Commands
     class Show < Command
       def run
-        if !File.exists?(Config.data_path)
+        unless File.exist?(Config.data_path)
           raise "System info not yet gathered, try running 'collect' first" unless @options.force
+
           data = { primaryGroup: @options.primary,
-                   secondaryGroups: @options.groups
-                 }
+                   secondaryGroups: @options.groups }
           data = data.deep_merge(physical_data)
           data = data.deep_merge(logical_data)
-          File.open(Config.data_path, "w") { |file| file.write(data.to_yaml) }
-          File.open(Config.data_path) { |file| puts file.read }
-        else
-          File.open(Config.data_path) { |file| puts file.read }
+          File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
         end
+        File.open(Config.data_path) { |file| puts file.read }
       end
     end
   end

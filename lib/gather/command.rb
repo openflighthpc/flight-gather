@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -30,7 +32,7 @@ module Gather
   class Command
     attr_accessor :args, :options
 
-    def initialize(args, options, command_name = nil)
+    def initialize(args, options, _command_name = nil)
       @args = args.freeze
       @options = OpenStruct.new(options)
     end

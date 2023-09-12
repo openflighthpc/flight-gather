@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #==============================================================================
 # Copyright (C) 2023-present Alces Flight Ltd.
 #
@@ -32,19 +34,17 @@ require 'commander'
 
 module Gather
   module CLI
-    PROGRAM_NAME = ENV.fetch('FLIGHT_PROGRAM_NAME','gather')
+    PROGRAM_NAME = ENV.fetch('FLIGHT_PROGRAM_NAME', 'gather')
 
     extend Commander::CLI
-    program :application, "Flight Gather"
+    program :application, 'Flight Gather'
     program :name, PROGRAM_NAME
     program :version, "v#{Gather::VERSION}"
     program :description, 'A tool to obtain relevant information about a node'
     program :help_paging, false
     default_command :help
 
-    if [/^xterm/, /rxvt/, /256color/].all? { |regex| ENV['TERM'] !~ regex }
-      Paint.mode = 0
-    end
+    Paint.mode = 0 if [/^xterm/, /rxvt/, /256color/].all? { |regex| ENV['TERM'] !~ regex }
 
     class << self
       def cli_syntax(command, args_str = nil)
@@ -58,28 +58,29 @@ module Gather
 
     command :collect do |c|
       cli_syntax(c)
-      c.summary = "Gathers physical and/or logical system information"
-      c.description = "Gathers physical and/or logical system information"
-      c.slop.string "--primary", "Primary group for the node"
-      c.slop.array "--groups", "Comma-separated list of secondary groups for the node"
-      c.slop.string "--type", "Type of check to run (physical or logical), if not provided then both types are collected"
+      c.summary = 'Gathers physical and/or logical system information'
+      c.description = 'Gathers physical and/or logical system information'
+      c.slop.string '--primary', 'Primary group for the node'
+      c.slop.array '--groups', 'Comma-separated list of secondary groups for the node'
+      c.slop.string '--type',
+                    'Type of check to run (physical or logical), if not provided then both types are collected'
       c.action Commands, :collect
     end
 
     command :show do |c|
       cli_syntax(c)
-      c.summary = "Displays collected system information"
-      c.description = "Displays collected system information"
-      c.slop.bool "--force", "Gathers all information if not already gathered."
+      c.summary = 'Displays collected system information'
+      c.description = 'Displays collected system information'
+      c.slop.bool '--force', 'Gathers all information if not already gathered.'
       c.action Commands, :show
     end
 
     command :modify do |c|
       cli_syntax(c)
-      c.summary = "Reset primary and/or secondary group for the node"
-      c.description = "Reset primary and/or secondary group for the node"
-      c.slop.string "--primary", "Primary group for the node"
-      c.slop.array "--groups", "Comma-separated list of secondary groups for the node"
+      c.summary = 'Reset primary and/or secondary group for the node'
+      c.description = 'Reset primary and/or secondary group for the node'
+      c.slop.string '--primary', 'Primary group for the node'
+      c.slop.array '--groups', 'Comma-separated list of secondary groups for the node'
       c.action Commands, :modify
     end
   end
