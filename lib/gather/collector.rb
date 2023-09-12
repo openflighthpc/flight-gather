@@ -31,7 +31,7 @@ require 'socket'
 require 'yaml'
 
 module Gather
-  module Collector
+  class Collector
     def self.physical_data
       data = {}
 
