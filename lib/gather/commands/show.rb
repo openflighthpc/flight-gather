@@ -38,8 +38,8 @@ module Gather
 
           data = { primaryGroup: @options.primary,
                    secondaryGroups: @options.groups }
-          data = data.deep_merge(physical_data)
-          data = data.deep_merge(logical_data)
+          data = data.deep_merge(Collector.physical_data)
+          data = data.deep_merge(Collector.logical_data)
           File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
         end
         File.open(Config.data_path) { |file| puts file.read }
