@@ -26,33 +26,45 @@
 # For more information on Flight Gather, please visit:
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
-require_relative 'commands/collect'
-require_relative 'commands/get'
-require_relative 'commands/modify'
-require_relative 'commands/show'
+require_relative '../command'
+require_relative '../config'
+require 'yaml'
 
 module Gather
   module Commands
-    class << self
-      def method_missing(s, *a)
-        raise 'command not defined' unless (clazz = to_class(s))
+    class Get < Command
+      def run
+        unless File.exist?(Config.data_path)
+          raise "System info not yet gathered, try running 'collect' first" unless @options.force
 
-        clazz.new(*a).run!
-      end
-
-      def respond_to_missing?(s)
-        !!to_class(s)
-      end
-
-      private
-
-      def to_class(s)
-        s.to_s.split('-').reduce(self) do |clazz, p|
-          p.gsub!(/_(.)/) { |a| a[1].upcase }
-          clazz.const_get(p[0].upcase + p[1..])
+          data = { primaryGroup: @options.primary,
+                   secondaryGroups: @options.groups }
+          data = data.deep_merge(Collector.physical_data)
+          data = data.deep_merge(Collector.logical_data)
+          File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
         end
-      rescue NameError
-        nil
+
+        data = YAML.load_file(Config.data_path)
+        keys = @args[0].delete_prefix(".").split(".")
+        value = data
+        keys.each do |key|
+          if key.match(/\[[^\]]*\]/)
+            key = key[1..-2]
+            if key.to_i.to_s == key
+              key = key.to_i
+            end
+          else
+            key = key.to_sym
+          end
+          break if value.nil?
+          value = value[key]
+        end
+
+        if value.respond_to?(:each)
+          puts value.to_yaml
+        else
+          puts value
+        end
       end
     end
   end
