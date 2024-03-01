@@ -83,11 +83,10 @@ module Gather
       # Get disk info
 
       data[:disks] = {}
-      disk_data = JSON.load(`lsblk -d -o +ROTA --json`)
-      disk_data["blockdevices"].each do |disk|
+      disk_data = JSON.parse(`lsblk -d -o +ROTA --json`)
+      disk_data['blockdevices'].each do |disk|
         data[:disks][name] = { type: disk['rota'] ? 'hdd' : 'ssd',
-                               size: disk['size']
-                             }
+                               size: disk['size'] }
       end
 
       # Get GPU info
@@ -116,7 +115,7 @@ module Gather
         data[:network][interface][:ip] = between(`nmcli -t device show #{interface}`, 'IP4.ADDRESS[1]:', "\n")
       end
 
-      if system("command -v ipmitool")
+      if system('command -v ipmitool')
         addr = begin
           `ipmitool lan print 1 | grep -e "IP Address" | grep -vi "Source"| awk '{ print $4 }'`.chomp
         rescue StandardError

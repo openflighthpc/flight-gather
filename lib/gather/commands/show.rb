@@ -50,13 +50,12 @@ module Gather
         keys.each do |key|
           if key.match(/\[[^\]]*\]/)
             key = key[1..-2]
-            if key.to_i.to_s == key
-              key = key.to_i
-            end
+            key = key.to_i if key.to_i.to_s == key
           else
             key = key.to_sym
           end
           break if value.nil?
+
           value = value[key]
         end
 
