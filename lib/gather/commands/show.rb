@@ -42,7 +42,29 @@ module Gather
           data = data.deep_merge(Collector.logical_data)
           File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
         end
-        File.open(Config.data_path) { |file| puts file.read }
+
+        data = YAML.load_file(Config.data_path)
+        keys = (@args[0] || '.').delete_prefix('.').split('.')
+
+        value = data
+        keys.each do |key|
+          if key.match(/\[[^\]]*\]/)
+            key = key[1..-2]
+            if key.to_i.to_s == key
+              key = key.to_i
+            end
+          else
+            key = key.to_sym
+          end
+          break if value.nil?
+          value = value[key]
+        end
+
+        if value.respond_to?(:each)
+          puts value.to_yaml
+        else
+          puts value
+        end
       end
     end
   end

@@ -27,7 +27,6 @@
 # https://github.com/openflighthpc/flight-gather
 #==============================================================================
 require_relative 'commands/collect'
-require_relative 'commands/get'
 require_relative 'commands/modify'
 require_relative 'commands/show'
 

@@ -68,7 +68,7 @@ module Gather
     end
 
     command :show do |c|
-      cli_syntax(c)
+      cli_syntax(c, '[FIELD]')
       c.summary = 'Displays collected system information'
       c.description = 'Displays collected system information'
       c.slop.bool '--force', 'Gathers all information if not already gathered.'
@@ -82,13 +82,6 @@ module Gather
       c.slop.string '--primary', 'Primary group for the node'
       c.slop.array '--groups', 'Comma-separated list of secondary groups for the node'
       c.action Commands, :modify
-    end
-
-    command :get do |c|
-      cli_syntax(c, 'FIELD')
-      c.summary = 'Return a specific value from a given field'
-      c.description = 'Return a specific value from a given field'
-      c.action Commands, :get
     end
   end
 end
