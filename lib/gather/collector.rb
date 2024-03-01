@@ -29,6 +29,7 @@
 
 require 'socket'
 require 'yaml'
+require 'json'
 
 module Gather
   class Collector
@@ -40,18 +41,25 @@ module Gather
       data[:model] = `dmidecode -s system-product-name`.chomp
       data[:bios] = `dmidecode -s bios-version`.chomp
       data[:serial] = `dmidecode -s system-serial-number`.chomp
-      data[:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.chomp # RAM measured in kB
+
+      # Get RAM info
+
+      data[:ram] = {}
+      data[:ram][:capacity] = between(`dmidecode -t 16`, 'Maximum Capacity: ', "\n")
+      data[:ram][:units] = between(`dmidecode -t 16`, 'Number Of Devices: ', "\n").to_i
 
       # Get processor info
 
       data[:cpus] = {}
       proc_info = `dmidecode -q -t processor`.split('Processor Information')[1..]
+      data[:cpus][:units] = proc_info&.size
+      data[:cpus][:cores_per_cpu] = [between(proc_info&.first, 'Thread count: ', "\n").to_i, 1].max
+      data[:cpus][:cpu_data] = {}
       proc_info&.each&.with_index() do |proc, index|
-        data[:cpus]["CPU#{index}"] = { socket: between(proc, 'Socket Designation: ', "\n"),
-                                       id: between(proc, 'ID: ', "\n"),
-                                       model: between(proc, 'Version: ', "\n"),
-                                       cores: [between(proc, 'Thread Count: ', "\n").to_i, 1].max,
-                                       hyperthreading: `cat /sys/devices/system/cpu/smt/active` == "1\n" }
+        data[:cpus][:cpu_data]["CPU#{index}"] = { socket: between(proc, 'Socket Designation: ', "\n"),
+                                                  model: between(proc, 'Version: ', "\n"),
+                                                  cores: [between(proc, 'Thread Count: ', "\n").to_i, 1].max,
+                                                  hyperthreading: `cat /sys/devices/system/cpu/smt/active` == "1\n" }
       end
 
       # Get interface info
@@ -75,10 +83,11 @@ module Gather
       # Get disk info
 
       data[:disks] = {}
-      disk_text = `lsblk -d`.split("\n").drop(1)
-      disk_text&.each do |disk|
-        disk_data = disk.split
-        data[:disks][disk_data[0]] = { size: disk_data[3] }
+      disk_data = JSON.load(`lsblk -d -o +ROTA --json`)
+      disk_data["blockdevices"].each do |disk|
+        data[:disks][name] = { type: disk['rota'] ? 'hdd' : 'ssd',
+                               size: disk['size']
+                             }
       end
 
       # Get GPU info
