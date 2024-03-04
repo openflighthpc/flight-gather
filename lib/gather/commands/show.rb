@@ -47,12 +47,12 @@ module Gather
         keys = (@args[0] || '.').delete_prefix('.').split('.')
 
         value = data
-        keys.each do |key|
-          if key.match(/\[[^\]]*\]/)
+        keys.each do |key|                          # All keys collected as strings
+          if key.match(/\[[^\]]*\]/)                # User is specifying a non-symbol key
             key = key[1..-2]
-            key = key.to_i if key.to_i.to_s == key
+            key = key.to_i if key.to_i.to_s == key  # Convert key to integer if possible
           else
-            key = key.to_sym
+            key = key.to_sym                        # Convert key to symbol
           end
           break if value.nil?
 
