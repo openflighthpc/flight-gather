@@ -37,6 +37,8 @@ module Gather
   module Commands
     class Collect < Command
       def run
+        raise "Root privileges required to collect data" unless Process.euid == 0
+
         if @options.type && (!%w[physical logical].include? @options.type.downcase)
           raise "Invalid data type, must be 'physical' or 'logical'"
         end
