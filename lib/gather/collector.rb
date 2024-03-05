@@ -85,7 +85,7 @@ module Gather
       data[:disks] = {}
       disk_data = JSON.parse(`lsblk -d -o +ROTA --json`)
       disk_data['blockdevices'].each do |disk|
-        data[:disks][name] = { type: disk['rota'] ? 'hdd' : 'ssd',
+        data[:disks][disk['name']] = { type: disk['rota'] ? 'hdd' : 'ssd',
                                size: disk['size'] }
       end
 
