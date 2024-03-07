@@ -45,8 +45,16 @@ module Gather
       # Get RAM info
 
       data[:ram] = {}
-      data[:ram][:capacity] = between(`dmidecode -t 16`, 'Maximum Capacity: ', "\n")
-      data[:ram][:units] = between(`dmidecode -t 16`, 'Number Of Devices: ', "\n").to_i
+      ram_info = `dmidecode -q -t 17`.split('Memory Device')[1..]
+      data[:ram][:total_capacity] = si_to_bytes(between(`dmidecode -t 16`, 'Maximum Capacity: ', "\n")) / (1000.0 ** 3)
+      data[:ram][:units] = ram_info&.size
+      data[:ram][:capacity_per_unit] = data[:ram][:total_capacity] / data[:ram][:units]
+      data[:ram][:ram_data] = {}
+      ram_info&.each&.with_index() do |device, index|
+        data[:ram][:ram_data]["RAM#{index}"] = { form_factor: between(device, 'Form Factor: ', "\n"),
+                                                 size: si_to_bytes(between(device, 'Size: ', "\n")) / (1000.0 ** 3),
+                                                 locator: between(device, "\tLocator: ", "\n") }
+      end
 
       # Get processor info
 
@@ -86,7 +94,7 @@ module Gather
       disk_data = JSON.parse(`lsblk -d -o +ROTA --json`)
       disk_data['blockdevices'].each do |disk|
         data[:disks][disk['name']] = { type: disk['rota'] ? 'hdd' : 'ssd',
-                               size: disk['size'] }
+                                       size: si_to_bytes(disk['size']) / (1000.0 ** 3) }
       end
 
       # Get GPU info
@@ -152,6 +160,13 @@ module Gather
       else
         ''
       end
+    end
+
+    def self.si_to_bytes(si_string)
+      units = ['', 'k', 'M', 'G', 'T', 'P']
+      value = si_string.scan(/\d+/).first
+      unit = si_string.split(value).last.to_s.strip[0]
+      return value.to_i * 1000 ** (units.index(unit).to_i)
     end
   end
 end
