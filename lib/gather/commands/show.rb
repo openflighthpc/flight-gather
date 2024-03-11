@@ -40,6 +40,8 @@ module Gather
                    secondaryGroups: @options.groups }
           data = data.deep_merge(Collector.physical_data)
           data = data.deep_merge(Collector.logical_data)
+
+          FileUtils.mkdir_p(File.dirname(Config.data_path))
           File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
         end
 
