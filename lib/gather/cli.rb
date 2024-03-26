@@ -68,7 +68,7 @@ module Gather
     end
 
     command :show do |c|
-      cli_syntax(c)
+      cli_syntax(c, '[FIELD]')
       c.summary = 'Displays collected system information'
       c.description = 'Displays collected system information'
       c.slop.bool '--force', 'Gathers all information if not already gathered.'
