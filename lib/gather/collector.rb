@@ -91,7 +91,7 @@ module Gather
       # Get disk info
 
       data[:disks] = {}
-      disk_data = JSON.parse(`lsblk -d -o +ROTA --json`)
+      disk_data = JSON.parse(`lsblk -e7 -d -o +ROTA --json`)
       disk_data['blockdevices'].each do |disk|
         data[:disks][disk['name']] = { type: disk['rota'] ? 'hdd' : 'ssd',
                                        size: si_to_bytes(disk['size']) / (1000.0 ** 3) }
