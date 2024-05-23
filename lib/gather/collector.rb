@@ -164,7 +164,7 @@ module Gather
 
     def self.si_to_bytes(si_string)
       units = ['', 'k', 'M', 'G', 'T', 'P']
-      value = si_string.scan(/(\d+(?:\.\d+)?)/).first[0]
+      value = si_string.scan(/(\d+(?:\.\d+)?)/).join
       unit = si_string.split(value).last.to_s.strip[0]
       return value.to_f * 1000 ** (units.index(unit).to_i)
     end
