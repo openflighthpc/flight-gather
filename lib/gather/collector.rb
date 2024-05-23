@@ -66,7 +66,7 @@ module Gather
       proc_info&.each&.with_index() do |proc, index|
         data[:cpus][:cpu_data]["CPU#{index}"] = { socket: between(proc, 'Socket Designation: ', "\n"),
                                                   model: between(proc, 'Version: ', "\n"),
-                                                  cores: [between(proc, 'Thread Count: ', "\n").to_i, 1].max,
+                                                  cores: [between(proc, 'Core Count: ', "\n").to_i, 1].max,
                                                   hyperthreading: `cat /sys/devices/system/cpu/smt/active` == "1\n" }
       end
 
