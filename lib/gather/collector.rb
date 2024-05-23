@@ -29,6 +29,7 @@
 
 require 'socket'
 require 'yaml'
+require 'json'
 
 module Gather
   class Collector
@@ -40,18 +41,33 @@ module Gather
       data[:model] = `dmidecode -s system-product-name`.chomp
       data[:bios] = `dmidecode -s bios-version`.chomp
       data[:serial] = `dmidecode -s system-serial-number`.chomp
-      data[:ram] = `grep MemTotal /proc/meminfo | awk '{print $2}'`.chomp # RAM measured in kB
+
+      # Get RAM info
+
+      data[:ram] = {}
+      ram_info = `dmidecode -q -t 17`.split('Memory Device')[1..].to_a.reject {|x| x.include?('No Module Installed')}
+      data[:ram][:total_capacity] = si_to_bytes(between(`lshw -quiet -c memory 2>/dev/null |grep -A 5 '*-memory' |grep size`, 'size: ', "\n")) / (1000.0 ** 3)
+      data[:ram][:units] = ram_info.size
+      data[:ram][:capacity_per_unit] = data[:ram][:total_capacity] / data[:ram][:units]
+      data[:ram][:ram_data] = {}
+      ram_info.each_with_index do |device, index|
+        data[:ram][:ram_data]["RAM#{index}"] = { form_factor: between(device, 'Form Factor: ', "\n"),
+                                                 size: si_to_bytes(between(device, 'Size: ', "\n")) / (1000.0 ** 3),
+                                                 locator: between(device, "\tLocator: ", "\n") }
+      end
 
       # Get processor info
 
       data[:cpus] = {}
       proc_info = `dmidecode -q -t processor`.split('Processor Information')[1..]
+      data[:cpus][:units] = proc_info&.size
+      data[:cpus][:cores_per_cpu] = [between(proc_info&.first, 'Thread count: ', "\n").to_i, 1].max
+      data[:cpus][:cpu_data] = {}
       proc_info&.each&.with_index() do |proc, index|
-        data[:cpus]["CPU#{index}"] = { socket: between(proc, 'Socket Designation: ', "\n"),
-                                       id: between(proc, 'ID: ', "\n"),
-                                       model: between(proc, 'Version: ', "\n"),
-                                       cores: [between(proc, 'Thread Count: ', "\n").to_i, 1].max,
-                                       hyperthreading: `cat /sys/devices/system/cpu/smt/active` == "1\n" }
+        data[:cpus][:cpu_data]["CPU#{index}"] = { socket: between(proc, 'Socket Designation: ', "\n"),
+                                                  model: between(`grep -m 1 '^model name' /proc/cpuinfo |sed 's/ @.*//g'`, "model name\t: ", "\n"),
+                                                  cores: [between(proc, 'Core Count: ', "\n").to_i, 1].max,
+                                                  hyperthreading: `cat /sys/devices/system/cpu/smt/active` == "1\n" }
       end
 
       # Get interface info
@@ -75,10 +91,10 @@ module Gather
       # Get disk info
 
       data[:disks] = {}
-      disk_text = `lsblk -d`.split("\n").drop(1)
-      disk_text&.each do |disk|
-        disk_data = disk.split
-        data[:disks][disk_data[0]] = { size: disk_data[3] }
+      disk_data = JSON.parse(`lsblk -e7 -d -o +ROTA --json`)
+      disk_data['blockdevices'].each do |disk|
+        data[:disks][disk['name']] = { type: disk['rota'] ? 'hdd' : 'ssd',
+                                       size: si_to_bytes(disk['size']) / (1000.0 ** 3) }
       end
 
       # Get GPU info
@@ -107,7 +123,7 @@ module Gather
         data[:network][interface][:ip] = between(`nmcli -t device show #{interface}`, 'IP4.ADDRESS[1]:', "\n")
       end
 
-      if system("command -v ipmitool")
+      if system('command -v ipmitool')
         addr = begin
           `ipmitool lan print 1 | grep -e "IP Address" | grep -vi "Source"| awk '{ print $4 }'`.chomp
         rescue StandardError
@@ -144,6 +160,13 @@ module Gather
       else
         ''
       end
+    end
+
+    def self.si_to_bytes(si_string)
+      units = ['', 'k', 'M', 'G', 'T', 'P']
+      value = si_string.scan(/(\d+(?:\.\d+)?)/).join
+      unit = si_string.split(value).last.to_s.strip[0]
+      return value.to_f * 1000 ** (units.index(unit).to_i)
     end
   end
 end

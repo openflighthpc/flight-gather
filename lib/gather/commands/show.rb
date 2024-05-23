@@ -40,9 +40,32 @@ module Gather
                    secondaryGroups: @options.groups }
           data = data.deep_merge(Collector.physical_data)
           data = data.deep_merge(Collector.logical_data)
+
+          FileUtils.mkdir_p(File.dirname(Config.data_path))
           File.open(Config.data_path, 'w') { |file| file.write(data.to_yaml) }
         end
-        File.open(Config.data_path) { |file| puts file.read }
+
+        data = YAML.load_file(Config.data_path)
+        keys = (@args[0] || '.').delete_prefix('.').split('.')
+
+        value = data
+        keys.each do |key|                          # All keys collected as strings
+          if key.match(/\[[^\]]*\]/)                # User is specifying a non-symbol key
+            key = key[1..-2]
+            key = key.to_i if key.to_i.to_s == key  # Convert key to integer if possible
+          else
+            key = key.to_sym                        # Convert key to symbol
+          end
+          break if value.nil?
+
+          value = value[key]
+        end
+
+        if value.respond_to?(:each)
+          puts value.to_yaml
+        else
+          puts value
+        end
       end
     end
   end
