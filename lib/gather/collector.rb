@@ -46,7 +46,7 @@ module Gather
 
       data[:ram] = {}
       ram_info = `dmidecode -q -t 17`.split('Memory Device')[1..]
-      data[:ram][:total_capacity] = si_to_bytes(between(`dmidecode -t 16`, 'Maximum Capacity: ', "\n")) / (1000.0 ** 3)
+      data[:ram][:total_capacity] = si_to_bytes(between(`lshw -quiet -c memory 2>/dev/null |grep -A 5 '*-memory' |grep size`, 'size: ', "\n")) / (1000.0 ** 3)
       data[:ram][:units] = ram_info&.size
       data[:ram][:capacity_per_unit] = data[:ram][:total_capacity] / data[:ram][:units]
       data[:ram][:ram_data] = {}
