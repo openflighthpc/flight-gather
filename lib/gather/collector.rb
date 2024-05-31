@@ -159,8 +159,8 @@ module Gather
         root_mount = File.read('/proc/mounts').split("\n").find{ |mount| mount.split[1] == '/' }.split.first
         machine_id = `lsblk #{root_mount} -f -o UUID -n`
       end
-      first_mac = data[:network][0][:mac]
-      data[:uuid] = `echo "#{machine_id}#{first_mac}" |md5sum |awk '{print $1}'`
+      first_mac = data[:network].values[0][:mac]
+      data[:uuid] = Digest::MD5.hexdigest "#{machine_id}#{first_mac}\n"
 
       data
     end
