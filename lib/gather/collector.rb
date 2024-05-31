@@ -150,6 +150,18 @@ module Gather
                           'Metal'
                         end
 
+      # Generate unique UUID
+      if File.file?('/etc/machine-id')
+        machine_id = File.read('/etc/machine-id')
+      elsif File.file?('/var/lib/dbus/machine-id')
+        machine_id = File.read('/var/lib/dbus/machine-id')
+      else
+        root_mount = File.read('/proc/mounts').split("\n").find{ |mount| mount.split[1] == '/' }.split.first
+        machine_id = `lsblk #{root_mount} -f -o UUID -n`
+      end
+      first_mac = data[:network][0][:mac]
+      data[:uuid] = `echo "#{machine_id}#{first_mac}" |md5sum |awk '{print $1}'`
+
       data
     end
 
