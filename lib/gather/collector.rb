@@ -150,6 +150,18 @@ module Gather
                           'Metal'
                         end
 
+      # Generate unique UUID
+      if File.file?('/etc/machine-id')
+        machine_id = File.read('/etc/machine-id').chomp
+      elsif File.file?('/var/lib/dbus/machine-id')
+        machine_id = File.read('/var/lib/dbus/machine-id').chomp
+      else
+        root_mount = File.read('/proc/mounts').split("\n").find{ |mount| mount.split[1] == '/' }.split.first
+        machine_id = `lsblk #{root_mount} -f -o UUID -n`.chomp
+      end
+      first_mac = `lshw -c network  2>/dev/null |grep -m 1 'serial:' |sed 's/.*serial: //g;s/://g'`.chomp
+      data[:uuid] = Digest::MD5.hexdigest "#{machine_id}#{first_mac}\n"
+
       data
     end
 
